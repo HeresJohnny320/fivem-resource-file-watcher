@@ -22,4 +22,4 @@ you can also edit the server.js file to enable or disable the script
 
 feel free to use my code and edit to your needs but please make sure you credit me for my work thanks and hope this helps :)
 
-any questions feel free to ask or create an issue on GitHub and i well be happy to help
+any questions feel free to ask or create an issue on GitHub and i will be happy to help
