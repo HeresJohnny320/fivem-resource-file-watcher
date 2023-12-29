@@ -1,5 +1,5 @@
 # fivem-resource-file-watcher
-this resource well attempt to restart any resource when you edit something in any resource
+this resource will attempt to restart any resource when you edit something in any resource
 
 any time you add a new resource or remove a resource or edit something in any resource it will refresh and restart only if resource is started if not started it will tell you to start the resource before it starts working
 
