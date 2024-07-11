@@ -1,30 +1,53 @@
 const path = require('path');
+
 var enabled_script = true;
 var attempt_to_run = false;
-    fs.watch("./resources", {  recursive: true}, function (event,filename) {
-        ExecuteCommand("refresh") 
-        console.log("REFRESHING RESOURCES LIST")
-        const pathParts = filename.split(path.sep); 
-    if (event === 'change' && filename) {
-        if(enabled_script){
-            if(pathParts[0] == GetCurrentResourceName()){
-                console.error("CANT RESTART ITSELF OTHERWISE I CRASH SERVER")
-            }else{
-                if(GetResourceState(pathParts[0]) == 'started' || GetResourceState(pathParts[0]) == 'starting' || GetResourceState(pathParts[0]) == 'running'){
-                console.debug("Resource Named:"+pathParts[0]+" Has Made A Change, fullpath:"+filename);
-                ExecuteCommand("restart "+pathParts[0]) 
-                }else if(GetResourceState(pathParts[0]) == 'stopped' || GetResourceState(pathParts[0]) == 'stopping'){
-                    if(attempt_to_run){
-                        console.warn("Attempting To Start Resource:"+pathParts[0])
-                        ExecuteCommand("start "+pathParts[0])
-                    }else{
-                        console.warn("Resource Named:"+pathParts[0]+" Is Not Running Please Start It With 'start "+pathParts[0]+"' To Run The Resource")
-                    }
-                }else{
-                    console.error("Resource Named:"+pathParts[0]+" Is uninitialized or unknown")
-                }
-            }
-        }
-    }
-  });
 
+fs.watch("./resources", {  recursive: true}, function (event, filename) {
+	if (filename == null) {
+		return
+	}
+
+	const pathParts = filename.split(path.sep);
+
+	console.log("REFRESHING RESOURCES LIST")
+	ExecuteCommand("refresh")
+
+	if (event === 'change' && filename) {
+		if (enabled_script) {
+			let foldersToSkip = 0
+
+			// If the folder starts with a open bracket, its clearly not a resource. Skip it until you find the actual resource.
+			for (let i = 0; i < pathParts.length - 1; i++) {
+				if (pathParts[i][0] == "[") {
+					foldersToSkip++
+				} else {
+					break
+				}
+			}
+
+			let resourceName = pathParts[foldersToSkip]
+
+			// Do not restart yourself
+			if (resourceName == GetCurrentResourceName()) {
+				console.error("Resource changed is self ('auto_restart').\n\t      Ignoring.")
+			} else {
+				// If it's started then restart it.
+				if (GetResourceState(resourceName) == 'started' || GetResourceState(resourceName) == 'starting' || GetResourceState(resourceName) == 'running') {
+					console.debug("Resource named: '" + resourceName + "' was changed.\n\t      Path: '" + filename + "'\n\t      Restarted.");
+					ExecuteCommand("restart " + resourceName)
+				// If it's stopped, then either start it, or give a warning that it stopped and must be started manually.
+				} else if (GetResourceState(resourceName) == 'stopped' || GetResourceState(resourceName) == 'stopping') {
+					if (attempt_to_run) {
+						console.warn("Attempting to start resource: '" + resourceName + "'")
+						ExecuteCommand("start " + resourceName)
+					} else {
+						console.warn("Resource named: " + resourceName + " is not running.\n\t      Please start it with 'start " + resourceName + "' to run the resource.\n\t      Ignoring.")
+					}
+				} else {
+					console.error("Resource named: '" + resourceName + "' is uninitialized/unknown/cannot be found!\n\t      Ignoring.")
+				}
+			}
+		}
+	}
+});
